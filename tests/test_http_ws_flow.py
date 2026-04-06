@@ -38,7 +38,7 @@ def test_http_request_logs_and_returns_id(client: TestClient) -> None:
     response = client.get(
         "/some/path?foo=bar",
         headers={
-            "Host": "www.abc.xyz",
+            "Host": "log.abc.xyz",
             "User-Agent": "pytest-agent",
             "Accept": "text/html",
         },
@@ -53,7 +53,7 @@ def test_http_request_logs_and_returns_id(client: TestClient) -> None:
 
 def test_websocket_handshake_and_message_logging(client: TestClient) -> None:
     with client.websocket_connect(
-        "/ws/test?x=1", headers={"Host": "www.abc.xyz"}
+        "/ws/test?x=1", headers={"Host": "log.abc.xyz"}
     ) as ws:
         first_msg = ws.receive_text()
         assert first_msg.isdigit()
@@ -65,7 +65,7 @@ def test_websocket_handshake_and_message_logging(client: TestClient) -> None:
 
 
 def test_full_url_and_headers_shape(client: TestClient) -> None:
-    host = "www.abc.xyz"
+    host = "log.abc.xyz"
     path = "/abc/def"
     query = "q=1"
     url = f"{path}?{query}"
@@ -102,7 +102,7 @@ def test_full_url_and_headers_shape(client: TestClient) -> None:
     assert other["x-extra"] == "value"
 
 
-def test_origin_domain_redirects_to_www(client: TestClient) -> None:
+def test_origin_domain_redirects_to_www(client: TestClient) -> None:  # TODO: move
     response = client.get(
         "/some/path?foo=bar",
         headers={"Host": "abc.xyz"},
@@ -166,13 +166,13 @@ def test_misconfigured_origin_returns_404(monkeypatch: pytest.MonkeyPatch) -> No
             pass
 
 
-def test_www_subdomain_template_caching(
+def test_log_subdomain_template_caching(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from M14404.subdomains.www import WwwSubdomainHandler
+    from M14404.subdomains.log import LogSubdomainHandler
 
     # Reset internal cache
-    WwwSubdomainHandler._html_template = None
+    LogSubdomainHandler._html_template = None
 
     # Mock pathlib.Path.read_text
     read_text_calls = 0
@@ -188,12 +188,12 @@ def test_www_subdomain_template_caching(
     monkeypatch.setattr(pathlib.Path, "read_text", mock_read_text)
 
     # First request should trigger read
-    response1 = client.get("/", headers={"Host": "www.abc.xyz"})
+    response1 = client.get("/", headers={"Host": "log.abc.xyz"})
     assert response1.status_code == 200
     assert read_text_calls == 1
 
     # Second request should not trigger read
-    response2 = client.get("/", headers={"Host": "www.abc.xyz"})
+    response2 = client.get("/", headers={"Host": "log.abc.xyz"})
     assert response2.status_code == 200
     assert read_text_calls == 1
 
@@ -206,9 +206,9 @@ def test_websocket_exception_handling(
     class MockError(Exception):
         pass
 
-    import M14404.subdomains.www as www_module
+    import M14404.subdomains.log as log_module
 
-    original_insert_ws_log = www_module._insert_ws_log
+    original_insert_ws_log = log_module._insert_ws_log
     call_count = 0
 
     async def mock_insert_ws_log(payload: Any) -> int:
@@ -218,11 +218,11 @@ def test_websocket_exception_handling(
             raise MockError("Simulated random crash")
         return int(await original_insert_ws_log(payload))
 
-    monkeypatch.setattr(www_module, "_insert_ws_log", mock_insert_ws_log)
+    monkeypatch.setattr(log_module, "_insert_ws_log", mock_insert_ws_log)
 
     with pytest.raises(WebSocketDisconnect) as exc_info:
         with client.websocket_connect(
-            "/ws/test?x=1", headers={"Host": "www.abc.xyz"}
+            "/ws/test?x=1", headers={"Host": "log.abc.xyz"}
         ) as ws:
             ws.receive_text()  # Receive handshake id
             ws.send_text("ping")  # triggers _insert_ws_log for message → crashes

@@ -1,4 +1,4 @@
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
@@ -14,6 +14,5 @@ class BaseSubdomainHandler:
     async def handle_http(self, request: Request) -> Response:
         return PlainTextResponse("method not allowed", status_code=405)
 
-    async def handle_ws(self, websocket: WebSocket) -> Any:
+    async def handle_ws(self, websocket: WebSocket) -> None:
         await websocket.close(code=1008)
-        return None

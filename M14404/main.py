@@ -12,11 +12,10 @@ Usage (with uvicorn)::
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
 
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route, WebSocketRoute
 from starlette.websockets import WebSocket
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
@@ -38,10 +37,10 @@ async def lifespan(app: Starlette) -> AsyncGenerator[None, None]:
         await db.close_db()
 
 
-async def catch_all_http(request: Request) -> Any:
-    settings = getattr(request.app.state, "settings", None)
+async def catch_all_http(request: Request) -> Response:
+    settings = request.app.state.settings
     host = request.headers.get("host", "")
-    origin_domain_name = getattr(settings, "origin_domain_name", "")
+    origin_domain_name = settings.origin_domain_name
     handler = resolver_service.resolve_handler(
         host=host,
         origin_domain_name=origin_domain_name,
@@ -51,17 +50,17 @@ async def catch_all_http(request: Request) -> Any:
     return await handler.handle_http(request)
 
 
-async def catch_all_ws(websocket: WebSocket) -> Any:
-    settings = getattr(websocket.app.state, "settings", None)
-    origin_domain_name = getattr(settings, "origin_domain_name", "")
+async def catch_all_ws(websocket: WebSocket) -> None:
+    settings = websocket.app.state.settings
+    origin_domain_name = settings.origin_domain_name
     handler = resolver_service.resolve_handler(
         host=websocket.headers.get("host", ""),
         origin_domain_name=origin_domain_name,
     )
     if not handler:
         await websocket.close(code=1008)
-        return None
-    return await handler.handle_ws(websocket)
+        return
+    await handler.handle_ws(websocket)
 
 
 routes = [

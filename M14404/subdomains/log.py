@@ -174,16 +174,16 @@ async def _insert_ws_log(payload: LogPayload) -> int:
     return created.id
 
 
-class WwwSubdomainHandler(BaseSubdomainHandler):
-    subdomain_key: ClassVar[str] = "www"
+class LogSubdomainHandler(BaseSubdomainHandler):
+    subdomain_key: ClassVar[str] = "log"
 
     _html_template: ClassVar[Optional[str]] = None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if WwwSubdomainHandler._html_template is None:
-            template_path = Path(__file__).parent / "www.html"
-            WwwSubdomainHandler._html_template = template_path.read_text("utf-8")
+        if LogSubdomainHandler._html_template is None:
+            template_path = Path(__file__).parent / "log.html"
+            LogSubdomainHandler._html_template = template_path.read_text("utf-8")
 
     async def handle_http(self, request: Request) -> HTMLResponse:
         client_ip = _get_client_ip_from_scope(request.scope)

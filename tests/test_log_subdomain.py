@@ -1,7 +1,7 @@
 import json
 from typing import Optional
 
-from M14404.subdomains.www import (
+from M14404.subdomains.log import (
     _split_headers,
     _build_common_payload,
     _get_client_ip_from_scope,

@@ -10,7 +10,7 @@ class Settings:
 
 
 def get_environment() -> str:
-    return os.getenv("M14404_ENV") or os.getenv("APP_ENV") or "dev"
+    return os.getenv("M14404_ENV") or "dev"
 
 
 def load_settings() -> Settings:
@@ -19,21 +19,15 @@ def load_settings() -> Settings:
     origin_domain_name = (os.getenv("M14404_ORIGIN_DOMAIN_NAME") or "").strip()
 
     if env == "test":
-        db_path: str = (
-            os.getenv("M14404_DB_PATH") or os.getenv("APP_DB_PATH") or ":memory:"
-        )
+        db_path = os.getenv("M14404_DB_PATH") or ":memory:"
         debug = False
     elif env == "prod":
-        db_path = (
-            os.getenv("M14404_DB_PATH")
-            or os.getenv("APP_DB_PATH")
-            or "/var/lib/asgi-server/M14404.db"
-        )
+        db_path = os.getenv("M14404_DB_PATH", "")
+        if not db_path:
+            raise ValueError("M14404_DB_PATH is not set")
         debug = False
     elif env == "dev":
-        db_path = (
-            os.getenv("M14404_DB_PATH") or os.getenv("APP_DB_PATH") or "./M14404.db"
-        )
+        db_path = os.getenv("M14404_DB_PATH") or "./M14404.db"
         debug = True
     else:
         raise ValueError(f"Unknown environment: {env}")

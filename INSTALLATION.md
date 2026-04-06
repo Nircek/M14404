@@ -3,14 +3,9 @@
 ### 1. Install system dependencies
 
 ```sh
-apk add --no-cache python3 py3-pip nginx openrc
+apk add --no-cache python3 nginx uv
 ```
 
-Install `uv`:
-
-```sh
-pip install uv
-```
 
 Enable OpenRC:
 
@@ -23,9 +18,10 @@ rc-update add nginx default
 Copy the project to `/opt/M14404` (or your preferred path):
 
 ```sh
-mkdir -p /opt/M14404
-cp -R /path/to/your/M14404/* /opt/M14404/
-cd /opt/asgi
+cd /opt
+mkdir M14404
+git clone https://github.com/Nircek/M14404.git
+cd M14404
 ```
 
 ### 3. Create and install Python environment with `uv`
@@ -41,8 +37,11 @@ This will create a virtual environment and install all dependencies defined in `
 Set environment variables in `/etc/conf.d/asgi` (created by you):
 
 ```sh
+cat | tee /etc/conf.d/M14404 << EOF
 M14404_ENV=prod
 M14404_DB_PATH=/var/lib/M14404/M14404.db
+M14404_ORIGIN_DOMAIN_NAME=abc.xyz
+EOF
 ```
 
 Create the database directory:
