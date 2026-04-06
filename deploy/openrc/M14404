@@ -1,0 +1,18 @@
+#!/sbin/openrc-run
+
+name="M14404"
+description="ASGI Subdomain Server"
+
+command="/usr/bin/uv"
+command_args="run --directory /opt/M14404 uvicorn M14404.main:app -- --host 0.0.0.0 --port 8000"
+command_background="yes"
+
+pidfile="/run/M14404.pid"
+output_log="/var/log/M14404.log"
+error_log="/var/log/asgi.err"
+
+depend() {
+    need net
+    use nginx
+}
+

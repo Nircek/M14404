@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Request Logged</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            padding: 2rem;
+            background: #0f172a;
+            color: #e5e7eb;
+        }
+
+        .card {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 1.5rem 1.75rem;
+            border-radius: 0.75rem;
+            background: #020617;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        .label {
+            font-size: 0.75rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin-bottom: 0.35rem;
+        }
+
+        .value {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        button {
+            margin-top: 1.5rem;
+            padding: 0.6rem 1.4rem;
+            border-radius: 999px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            background: #22c55e;
+            color: #022c22;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: default;
+        }
+
+        .status {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .status span {
+            color: #22c55e;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="label">HTTP Log ID</div>
+        <div class="value" id="http-id">{inserted_id}</div>
+        <button id="ws-button">Open WebSocket</button>
+        <div class="status" id="status">
+            WebSocket: <span>disconnected</span>
+        </div>
+        <div class="status" id="ws-id-container" style="display:none;">
+            Last WebSocket log ID: <span id="ws-id"></span>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const button = document.getElementById("ws-button");
+            const statusEl = document.getElementById("status").querySelector("span");
+            const wsIdContainer = document.getElementById("ws-id-container");
+            const wsIdEl = document.getElementById("ws-id");
+
+            let ws = null;
+            let opened = false;
+
+            function connectWebSocket() {
+                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const wsUrl = protocol + "://" + window.location.host + window.location.pathname + window.location.search;
+
+                ws = new WebSocket(wsUrl);
+                statusEl.textContent = "connecting…";
+                button.disabled = true;
+
+                ws.onopen = function () {
+                    opened = true;
+                    statusEl.textContent = "connected";
+                    button.disabled = false;
+                    button.textContent = "Send WebSocket event";
+                };
+
+                ws.onmessage = function (event) {
+                    wsIdContainer.style.display = "block";
+                    wsIdEl.textContent = event.data;
+                };
+
+                ws.onclose = function () {
+                    statusEl.textContent = "disconnected";
+                    button.textContent = "Open WebSocket";
+                    ws = null;
+                    opened = false;
+                };
+
+                ws.onerror = function () {
+                    statusEl.textContent = "error";
+                };
+            }
+
+            button.addEventListener("click", function () {
+                if (!ws || !opened) {
+                    connectWebSocket();
+                    return;
+                }
+                try {
+                    ws.send("ping");
+                } catch (e) {
+                    statusEl.textContent = "error";
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
